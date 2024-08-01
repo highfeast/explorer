@@ -4,13 +4,15 @@
       "main": "src/explorer_backend/main.mo",
       "type": "motoko"
     },
+    "ic_siwe_provider": {
+      "type": "custom",
+      "candid": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.5/ic_siwe_provider.did",
+      "wasm": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.5/ic_siwe_provider.wasm.gz",
+      "init_arg": "( record { domain = \"127.0.0.1\"; uri = \"http://127.0.0.1:60969\"; salt = \"salt\"; chain_id = opt 1; scheme = opt \"http\"; statement = opt \"Login to FoodFolio with SIWE\"; sign_in_expires_in = opt 300000000000; session_expires_in = opt 604800000000000; } )"
+    },
     "explorer_frontend": {
-      "dependencies": [
-        "explorer_backend"
-      ],
-      "source": [
-        "src/explorer_frontend/dist"
-      ],
+      "dependencies": ["explorer_backend", "ic_siwe_provider"],
+      "source": ["src/explorer_frontend/dist"],
       "type": "assets",
       "workspace": "explorer_frontend"
     },
@@ -29,7 +31,7 @@
   "defaults": {
     "build": {
       "args": "",
-      "packtool": ""
+      "packtool": "mops sources"
     }
   },
   "output_env_file": ".env",

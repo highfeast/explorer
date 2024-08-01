@@ -1,14 +1,23 @@
-import { fileURLToPath, URL } from 'url';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
-import environment from 'vite-plugin-environment';
-import dotenv from 'dotenv';
+import { fileURLToPath, URL } from "url";
+import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
+import environment from "vite-plugin-environment";
+import dotenv from "dotenv";
 
-dotenv.config({ path: '../../.env' });
+dotenv.config({ path: "../../.env" });
+
+process.env.II_URL =
+  process.env.DFX_NETWORK === "local"
+    ? `http://${process.env.CANISTER_ID_INTERNET_IDENTITY}.localhost:4943/`
+    : `https://identity.ic0.app`;
 
 export default defineConfig({
   build: {
     emptyOutDir: true,
+    rollupOptions: {
+      // Add external option to prevent Rollup from bundling certain modules
+      // external: ['@dfinity/agent'],
+    },
   },
   optimizeDeps: {
     esbuildOptions: {
@@ -27,6 +36,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    environment(["II_URL"]),
     environment("all", { prefix: "CANISTER_" }),
     environment("all", { prefix: "DFX_" }),
   ],
@@ -34,9 +44,7 @@ export default defineConfig({
     alias: [
       {
         find: "declarations",
-        replacement: fileURLToPath(
-          new URL("../declarations", import.meta.url)
-        ),
+        replacement: fileURLToPath(new URL("../declarations", import.meta.url)),
       },
     ],
   },
