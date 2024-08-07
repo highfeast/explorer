@@ -55,6 +55,7 @@ To test the project locally, follow these steps:
 
    ```bash
    dfx start
+   dfx canister create --all
    dfx deploy
    ```
 

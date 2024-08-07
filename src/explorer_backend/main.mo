@@ -133,7 +133,7 @@ shared ({ caller }) actor class Main() {
     };
 
     ///////////////////////////
-    // Vector Store Owner
+    // DB Write Owner
     //////////////////////////
 
     public shared (msg) func addRecipe(title : Text, content : Text) : async ?({
@@ -182,7 +182,7 @@ shared ({ caller }) actor class Main() {
     };
 
     ///////////////////////////
-    // DB  Read Functions
+    // DB Read Functions
     //////////////////////////
 
     public func getIndex(storeId : Text) : async ?{ items : VectorStore } {
