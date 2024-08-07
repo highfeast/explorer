@@ -10,8 +10,19 @@
       "wasm": "https://github.com/kristoferlund/ic-siwe/releases/download/v0.0.5/ic_siwe_provider.wasm.gz",
       "init_arg": "( record { domain = \"127.0.0.1\"; uri = \"http://127.0.0.1:60969\"; salt = \"salt\"; chain_id = opt 1; scheme = opt \"http\"; statement = opt \"Login to FoodFolio with SIWE\"; sign_in_expires_in = opt 300000000000; session_expires_in = opt 604800000000000; } )"
     },
+
+    "blueband_db_provider": {
+      "type": "custom",
+      "candid": "https://github.com/acgodson/blueband-db/releases/download/v0.1.1/blueband-db-backend.did",
+      "wasm": "https://github.com/acgodson/blueband-db/releases/download/v0.1.1/blueband-db-backend.wasm.gz"
+    },
+
     "explorer_frontend": {
-      "dependencies": ["explorer_backend", "ic_siwe_provider"],
+      "dependencies": [
+        "explorer_backend",
+        "ic_siwe_provider",
+        "blueband_db_provider"
+      ],
       "source": ["src/explorer_frontend/dist"],
       "type": "assets",
       "workspace": "explorer_frontend"

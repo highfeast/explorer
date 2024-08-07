@@ -1,11 +1,9 @@
 import Map "mo:map/Map";
-import Buckets "./bucket/Bucket";
-import Blueband "./blueband/Types";
+import Blueband "../blueband";
 
 module Types {
 
     public type StoreId = Text;
-    public type Bucket = Buckets.Bucket;
     public type VectorStore = [VectorData];
     public type Metadata = [RecipeInfo];
 

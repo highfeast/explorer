@@ -1,8 +1,5 @@
-import Buckets "../bucket/Bucket";
+module {
 
-module BluebandProvider {
-
-    public type Bucket = Buckets.Bucket;
     public type CollectionId = Text;
     public type DocumentId = Text;
     public type VectorId = Text;
@@ -25,18 +22,24 @@ module BluebandProvider {
         embedding : [Float];
     };
 
+    public type VectorStore = [Vector];
+    public type MetadataList = [DocumentMetadata];
+
     public type Collection = {
-        bucket : Bucket;
+        bucket : actor {};
         var size : Nat;
         var cycle_balance : Nat;
     };
 
-    public type VectorStore = [Vector];
-    public type MetadataList = [DocumentMetadata];
+    public type EmbeddingsResponse = {
+        #success : Text;
+        #rate_limited : Text;
+        #error : Text;
+    };
 
     public type BluebandProvider = actor {
 
-        index : (collectionId : CollectionId) -> async ?{
+        getIndex : (collectionId : CollectionId) -> async ?{
             items : VectorStore;
         };
 
@@ -51,6 +54,7 @@ module BluebandProvider {
             vectorId : VectorId,
             start : Nat,
             end : Nat,
+            norm : Float,
             vector : [Float],
         ) -> async Text;
 
@@ -69,6 +73,8 @@ module BluebandProvider {
         documentIDToTitle : (collectionId : CollectionId, documentId : DocumentId) -> async ?Title;
 
         titleToDocumentID : (collectionId : CollectionId, title : Title) -> async ?DocumentId;
+
+        generateEmbeddings(texts : [Text], secret : Text) : async EmbeddingsResponse;
 
         wallet_receive : () -> async ();
     };

@@ -1,5 +1,5 @@
 import Map "mo:map/Map";
-import ServiceTypes "../Types";
+import ServiceTypes "./utils/Types";
 import { thash } "mo:map/Map";
 import Blob "mo:base/Blob";
 import Text "mo:base/Text";
@@ -96,5 +96,3 @@ module Profiles {
     };
 
 };
-
-// do you calculation, would it give me the same value the vec29 and the original text I sent to you .

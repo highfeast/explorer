@@ -22,7 +22,6 @@ import { ModalDescription, ModalFooter, ModalTitle } from "../molecules/modal";
 import { generateMarkdown } from "../../utils";
 
 function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
-
   const { actor } = useActor();
 
   // Local State
@@ -41,7 +40,7 @@ function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
     if (
       file &&
       (file.type ===
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" ||
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
         file.name.endsWith(".xlsx"))
     ) {
       const reader = new FileReader();
@@ -82,9 +81,8 @@ function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
-        ".xlsx",
-      ],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        [".doc", ".docx"],
     },
   });
 

@@ -2,6 +2,7 @@ import Random "mo:base/Random";
 import Nat8 "mo:base/Nat8";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
+import Array "mo:base/Array";
 module {
 
     public func generateRandomID(name : Text) : async Text {
@@ -34,4 +35,20 @@ module {
         };
         slicedText;
     };
+
+    // public func sliceText(text : Text, start : Nat, end : Nat) : Text {
+    //     // Ensure the start and end indices are within bounds
+    //     let textSize = Text.size(text);
+    //     assert (Nat.lessOrEqual(start, textSize));
+    //     assert (Nat.lessOrEqual(end, textSize));
+    //     assert (Nat.less(start, end));
+
+    //     // Convert the text to an array of characters
+    //     let chars = Text.toArray(text);
+
+    //     // Extract the substring
+    //     let slicedChars = Array.slice(chars, start, end);
+    //     Text.fromArray(slicedChars);
+    // };
+
 };

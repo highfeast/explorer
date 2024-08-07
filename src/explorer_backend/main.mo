@@ -3,12 +3,11 @@ import Debug "mo:base/Debug";
 import Cycles "mo:base/ExperimentalCycles";
 import Principal "mo:base/Principal";
 
-import BluebandProvider "./blueband/BluebandProvider";
+import BluebandProvider "./blueband";
+import Request "./http_request";
+import Profiles "./profiles";
 
-import Request "./Request";
-import Profiles "./profiles/Profiles";
-
-import Types "./Types";
+import Types "./utils/Types";
 import HTTPTypes "./utils/HTTPTypes";
 
 shared ({ caller }) actor class Main() {
@@ -157,6 +156,7 @@ shared ({ caller }) actor class Main() {
         vector_id : Text,
         start : Nat,
         end : Nat,
+        norm : Float,
         vector : [Float],
     ) : async Text {
 
@@ -167,6 +167,7 @@ shared ({ caller }) actor class Main() {
             vector_id,
             start,
             end,
+            norm,
             vector,
         );
     };
@@ -187,7 +188,7 @@ shared ({ caller }) actor class Main() {
 
     public func getIndex(storeId : Text) : async ?{ items : VectorStore } {
         let db = await getDB();
-        await db.index(storeId);
+        await db.getIndex(storeId);
     };
 
     public func metadata(storeId : Text) : async ?Metadata {
@@ -226,9 +227,6 @@ shared ({ caller }) actor class Main() {
 
     public func fetchQueryResponse(prompt : Text, context : Text) : async Text {
         return await Request.fetchQueryResponse(prompt, context, transform);
-    };
-    public func createEmbeddings(words : [Text]) : async Text {
-        return await Request.createEmbeddings(words, transform);
     };
 
     public shared query func transform(args : HTTPTypes.TransformArgs) : async HTTPTypes.HttpResponsePayload {
