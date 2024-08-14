@@ -10,24 +10,24 @@ import { Erc4337Provider } from "./eth/EthContext";
 import Actors from "./ic/Actors";
 import ActorsII from "./ic/ii/Actors";
 import AuthController from "./AuthGuard";
-import { VectorDBProvider } from "ic-use-blueband-db";
+import { BluebandProvider } from "ic-use-blueband-db";
 
 const queryClient = new QueryClient();
 
 type ProviderWrapperProps = {
   children: React.ReactNode;
-  subDomain: string | null;
+  storeId: string | undefined;
 };
 
 export default function ProviderWrapper({
   children,
-  subDomain,
+  storeId,
 }: ProviderWrapperProps) {
-  if (subDomain && subDomain.length > 0) {
+  if (storeId && storeId.length > 0) {
     return (
       <InternetIdentityProvider>
         <ActorsII>
-          <VectorDBProvider>{children}</VectorDBProvider>
+          <BluebandProvider>{children}</BluebandProvider>
         </ActorsII>
       </InternetIdentityProvider>
     );
@@ -47,7 +47,7 @@ export default function ProviderWrapper({
             >
               <Actors>
                 <AuthController>
-                  <VectorDBProvider>{children}</VectorDBProvider>
+                  <BluebandProvider>{children}</BluebandProvider>
                 </AuthController>
               </Actors>
             </SiweIdentityProvider>

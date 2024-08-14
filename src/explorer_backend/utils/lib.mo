@@ -2,7 +2,7 @@ import Random "mo:base/Random";
 import Nat8 "mo:base/Nat8";
 import Nat "mo:base/Nat";
 import Text "mo:base/Text";
-import Array "mo:base/Array";
+// import Array "mo:base/Array";
 module {
 
     public func generateRandomID(name : Text) : async Text {

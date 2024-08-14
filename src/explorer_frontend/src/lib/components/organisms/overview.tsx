@@ -3,7 +3,7 @@ import {
   LucidePlusCircle,
   RefreshCwIcon,
   CheckIcon,
-  ExternalLinkIcon,
+  CopyIcon,
 } from "lucide-react";
 import {
   Text,
@@ -16,7 +16,7 @@ import {
 } from "@radix-ui/themes";
 import { useSiweIdentity } from "ic-use-siwe-identity";
 import { useActor } from "../../../ic/Actors";
-import { useVectorDB } from "ic-use-blueband-db";
+import { useBlueBand } from "ic-use-blueband-db";
 
 type RecipeInfo = {
   chunkCount: number;
@@ -28,25 +28,37 @@ type RecipeInfo = {
   size: number;
 };
 
+const OPENAI_SECRET = import.meta.env.VITE_OPENAI_SECRET;
+
 function Overview({ toggleHome }: { toggleHome: () => void }) {
   const { identity } = useSiweIdentity();
   const { actor } = useActor();
   const [fetching, setFetching] = useState(true);
   const [recipes, setRecipes] = useState<any | null>(null);
   const [store, setStore] = useState<any | string>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
 
-  const {
-    isEmbedding,
-    saveEmbeddings,
-    init,
-    store: isInitalized,
-  } = useVectorDB();
+  const { isInitalized, isSaving, AddItem, initializeIndex } = useBlueBand();
 
-   // Initialize Vector DB
-   useEffect(() => {
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000); // Reset success message after 2 seconds
+    } catch (err) {
+      console.error("Failed to copy text: ", err);
+    }
+  };
+
+  // Initialize Vector DB
+  useEffect(() => {
     if (!isInitalized && store && actor) {
       console.log(actor);
-      init(actor, store);
+      const config = {
+        collection: store,
+        api_key: OPENAI_SECRET,
+      } as any;
+      initializeIndex(actor, config);
     }
     console.log("db initialized", isInitalized);
   }, [store, actor, isInitalized]);
@@ -59,25 +71,27 @@ function Overview({ toggleHome }: { toggleHome: () => void }) {
     const profile = await actor.getMyProfile();
     const storeId = profile[0].store.toString();
     setStore(storeId);
-
-    const result = await actor.metadata(storeId);
-    if (result[0]) {
-      const convertedRecipes = result[0].map((recipe: RecipeInfo | any) => ({
-        ...recipe,
-        chunkCount: Number(recipe.chunkCount),
-        chunkEndId: Number(recipe.chunkEndId),
-        chunkStartId: Number(recipe.chunkStartId),
-        size: Number(recipe.size),
-      }));
-      setRecipes(convertedRecipes);
+    console.log("store id maybe exists", storeId);
+    if (storeId) {
+      const result = await actor.getMetadataList(storeId);
+      console.log("the result", result);
+      if (result[0]) {
+        const convertedRecipes = result[0].map((recipe: RecipeInfo | any) => ({
+          ...recipe,
+          chunkCount: Number(recipe.chunkCount),
+          chunkEndId: Number(recipe.chunkEndId),
+          chunkStartId: Number(recipe.chunkStartId),
+          size: Number(recipe.size),
+        }));
+        setRecipes(convertedRecipes);
+      }
+      setFetching(false);
     }
-    setFetching(false);
   };
 
   useEffect(() => {
     fetchRecipes();
   }, []);
- 
 
   return (
     <div className="w-full">
@@ -89,11 +103,14 @@ function Overview({ toggleHome }: { toggleHome: () => void }) {
           <Button onClick={toggleHome} className="cursor-pointer py-2">
             <LucidePlusCircle /> Add
           </Button>
-          <a href={`"http://${store}.localhost:3000"`}>
-            <Button variant={"outline"} className="cursor-pointer py-2">
-              <ExternalLinkIcon />
-            </Button>
-          </a>
+          <Button
+            variant="outline"
+            className="cursor-pointer py-2"
+            onClick={() => copyToClipboard(`http://localhost:3000/${store}`)}
+          >
+            <CopyIcon />
+            {copySuccess ? " Copied!" : ""}
+          </Button>
         </Flex>
       </div>
       <Card className="mt-8">
@@ -132,10 +149,10 @@ function Overview({ toggleHome }: { toggleHome: () => void }) {
                       {!recipe.isEmbedded ? (
                         <>
                           <Button
-                            loading={isEmbedding}
+                            loading={isSaving}
                             disabled={!isInitalized}
                             onClick={() =>
-                              saveEmbeddings(recipe.name, recipe.recipe_id)
+                              AddItem(recipe.name, recipe.recipe_id)
                             }
                             className="cursor-pointer"
                             size={"1"}

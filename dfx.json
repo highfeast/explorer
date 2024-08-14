@@ -13,8 +13,8 @@
 
     "blueband_db_provider": {
       "type": "custom",
-      "candid": "https://github.com/acgodson/blueband-db/releases/download/v0.1.1/blueband-db-backend.did",
-      "wasm": "https://github.com/acgodson/blueband-db/releases/download/v0.1.1/blueband-db-backend.wasm.gz"
+      "candid": "https://github.com/acgodson/blueband-db/releases/download/v0.1.3/blueband-db-backend.did",
+      "wasm": "https://github.com/acgodson/blueband-db/releases/download/v0.1.3/blueband-db-backend.wasm.gz"
     },
 
     "explorer_frontend": {
@@ -25,7 +25,8 @@
       ],
       "source": ["src/explorer_frontend/dist"],
       "type": "assets",
-      "workspace": "explorer_frontend"
+      "workspace": "explorer_frontend",
+      "asset_command": ""
     },
     "internet_identity": {
       "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",

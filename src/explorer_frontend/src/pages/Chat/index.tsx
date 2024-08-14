@@ -5,8 +5,9 @@ import { useActor } from "../../ic/ii/Actors";
 
 import QueryResponse from "../../lib/components/organisms/query-response";
 import { Box, Text } from "@radix-ui/themes";
-import { useVectorDB } from "ic-use-blueband-db";
-import { useInternetIdentity } from "ic-use-internet-identity";
+// import { useBlueBand } from "ic-use-blueband-db";
+// import { useInternetIdentity } from "ic-use-internet-identity";
+import { BlueBand } from "../../lib/components/organisms/Blueband";
 
 interface Interaction {
   userInput: string;
@@ -17,34 +18,50 @@ interface Interaction {
 }
 const placeholders = ["Hello?", "I have a question?", "What do you think?"];
 
+const OPENAI_SECRET = import.meta.env.VITE_OPENAI_SECRET;
+
 const QueryInterface = ({ storeId }: { storeId: string }) => {
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [currentInput, setCurrentInput] = useState("");
   const [isFetching, setIsFetching] = useState(false);
   const [store, setStore] = useState<any | null>(storeId);
   const { actor } = useActor();
-  const {
-    isQuerying,
-    init,
-    similarityQuery,
-    store: isInitalized,
-  } = useVectorDB();
+  // const { isQuerying } = useBlueBand();
+  const [index, setIndex] = useState<any | null>(null);
+  const [isInitalized, setisInitalized] = useState(false);
+
+  // Retrieve storefromurl
+
+  useEffect(() => {
+    setStore(storeId);
+  }, []);
 
   // Initialize Vector DB
   useEffect(() => {
-    if (!isInitalized && store && actor) {
-      console.log(actor);
-      init(actor, store);
+    async function init() {
+      const config = {
+        collection: store,
+        api_key: OPENAI_SECRET,
+      };
+      const db = new BlueBand(actor, config);
+      if (db) {
+        const _index = await db.initialize();
+        setIndex(_index);
+        setisInitalized(true);
+        console.log("db initialized", true);
+      }
     }
-    console.log("db initialized", isInitalized);
-  }, [store, actor, isInitalized]);
+    if (store && actor && !isInitalized) {
+      init();
+    }
+  }, [store, actor, isInitalized, setIndex]);
 
   const getAIResponse = async (
     input: string
   ): Promise<Interaction["aiResponse"] | null> => {
     try {
       let response: any;
-      const x = await actor.fetchQueryResponse(input, "");
+      const x = await actor.fetchQueryResponse(input, OPENAI_SECRET, "");
       response = JSON.parse(x);
 
       if (!response.embedding) {
@@ -55,13 +72,48 @@ const QueryInterface = ({ storeId }: { storeId: string }) => {
       } else {
         //do similarity check and resend request
         console.log(response.embedding[0]);
-        init(actor, store);
-        const context = await similarityQuery(response.embedding[0]);
+
+        // const config = {
+        //   collection: store,
+        //   api_key: OPENAI_SECRET,
+        // };
+
+        // const db = new BlueBand(actor, config);
+        // const index = await db.initialize();
+        console.log(index);
+
+        const results = await index.queryDocuments(response.embedding[0], {
+          maxDocuments: 4,
+          maxChunks: 512,
+        });
+
+        const context = await Promise.all(
+          results.map(async (result: any) => {
+            const sections = await result.renderSections(500, 1, true);
+            console.log("assumed title", result.title);
+            const id = await actor.documentIDToTitle(store, result.title);
+            return {
+              title: result.title,
+              id: id,
+              score: result.score,
+              chunks: result.chunks.length,
+              sections: sections.map((section: any) => ({
+                text: section.text
+                  .replace(/\n+/g, "\n")
+                  .replace(/\n/g, "\\n")
+                  .replace(/"/g, '\\"'),
+                tokens: section.tokenCount,
+              })),
+            };
+          })
+        );
+
         console.log(context);
         if (context && context.length > 0) {
           console.log("fine-tuned context", context[0].sections[0].text);
           const x = await actor.fetchQueryResponse(
             input,
+            OPENAI_SECRET,
             context[0].sections[0].text
           );
           const newResponse = JSON.parse(x);
@@ -162,7 +214,7 @@ const QueryInterface = ({ storeId }: { storeId: string }) => {
         onChange={handleChange}
         onSubmit={onSubmit}
         value={currentInput}
-        disabled={isFetching || !isInitalized}
+        disabled={false} // isFetching || !isInitalized
       />
     </div>
   );

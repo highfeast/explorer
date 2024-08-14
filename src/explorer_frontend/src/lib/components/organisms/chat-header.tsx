@@ -1,6 +1,5 @@
 import { Box, Button, Text } from "@radix-ui/themes";
 import { useInternetIdentity } from "ic-use-internet-identity";
-import { useVectorDB } from "ic-use-blueband-db";
 import BearAvatar from "../atoms/bear-avatar";
 
 import { useEffect, useState } from "react";
@@ -9,7 +8,7 @@ import { shortenAddress } from "../../utils";
 const ChatHeader = ({ className }: { className?: string }) => {
   const { login, loginStatus, identity } = useInternetIdentity();
   const [principal, setPrincipal] = useState<string | null>(null);
-  const { store } = useVectorDB();
+  // const { isInitalized } = useBlueBand();
   const disabled =
     loginStatus === "logging-in" ||
     loginStatus === "success" ||
@@ -45,7 +44,7 @@ const ChatHeader = ({ className }: { className?: string }) => {
         href="https://github.com/highfeast/explorer"
       >
         <Text size={"4"} className="">
-          {identity && !store ? "Intializing..." : store ?? ""}
+          {principal ?? ""}
         </Text>
       </a>
 

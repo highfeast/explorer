@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { FileSpreadsheet, ArrowLeft } from "lucide-react";
+import { FileSpreadsheet, ArrowLeft, Loader } from "lucide-react";
 
 import {
   Flex,
@@ -17,9 +17,14 @@ import { useDropzone } from "react-dropzone";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import * as XLSX from "xlsx";
+
 import { useActor } from "../../../ic/Actors";
+
 import { ModalDescription, ModalFooter, ModalTitle } from "../molecules/modal";
 import { generateMarkdown } from "../../utils";
+import { BlueBand } from "./Blueband";
+
+const OPENAI_SECRET = import.meta.env.VITE_OPENAI_SECRET;
 
 function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
   const { actor } = useActor();
@@ -32,6 +37,7 @@ function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
   const [parsedContent, setParsedContent] = useState(null);
   const [JSONContent, setJSONContent] = useState<any | null>(null);
 
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const toggleModal = () => setIsModalOpen(!isModalOpen);
 
@@ -82,7 +88,7 @@ function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
     onDrop,
     accept: {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        [".doc", ".docx"],
+        [".xlsx", ".excel"],
     },
   });
 
@@ -119,6 +125,7 @@ function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
     }
 
     try {
+      setLoading(true);
       const payload = {
         additionalInstructions: instructions,
         ...JSONContent,
@@ -126,13 +133,40 @@ function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
       const formattedPayload = JSON.stringify(payload, null, 1);
       console.log("this is the payload to be submitted", formattedPayload);
 
+      //saves recipe in backend
       const response = await actor.addRecipe(
         JSONContent.title,
         formattedPayload
       );
+
+      const storeId = await actor.getMyStoreID();
+      if (!storeId) {
+        console.log("collection id not found");
+        return;
+      }
+      console.log("this is th storedid ", storeId);
+
+      const documentId = response[0]?.recipe_id[0];
+      const documentTitle = JSONContent.title;
+      console.log("this is the document id", documentTitle);
+
+      const config = {
+        collection: storeId,
+        api_key: OPENAI_SECRET,
+      };
+
+      // use the frontend package to add vectors
+      const db = new BlueBand(actor, config);
+      const index = await db.initialize();
+
+      const result = await db.customAddVector(index, documentTitle, documentId);
+
+      console.log(`Document's embeddings saved successfully. ID: ${result!}`);
+      setLoading(false);
       handleReset();
       toggleHome();
     } catch (e: any) {
+      setLoading(false);
       console.log(e.message || "error adding receipe");
     }
   };
@@ -263,7 +297,11 @@ function NewRecipe({ toggleHome }: { toggleHome: () => void }) {
           className="float-right mt-4 cursor-pointer"
           size={"3"}
         >
-          Save
+          {loading ? (
+            <Loader className="animate-spin" />
+          ) : (
+            "Update Knowledge base"
+          )}
         </Button>
       </div>
 

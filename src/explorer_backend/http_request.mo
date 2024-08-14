@@ -12,15 +12,19 @@ module Request {
 
     type Transform = shared query HTTPTypes.TransformArgs -> async HTTPTypes.HttpResponsePayload;
 
-    public let base_url = "https://ic-gpt-api.vercel.app/";
+    public let base_url = "https://blueband-db-442d8.web.app/";
 
-    public func fetchQueryResponse(prompt : Text, context : Text, transform : Transform) : async Text {
+    public func fetchQueryResponse(prompt : Text, context : Text, api_key: Text, transform : Transform) : async Text {
         let ic : HTTPTypes.IC = actor ("aaaaa-aa");
         let url = let url = base_url # "api/query";
-        let request_headers = [{
-            name = "Content-Type";
-            value = "application/json";
-        }];
+        let request_headers = [
+            {
+                name = "Content-Type";
+                value = "application/json";
+
+            },
+            { name = "Authorization"; value = "Bearer " # api_key },
+        ];
 
         // Construct request body based on context presence
         let request_body_json : Text = if (context == "") {

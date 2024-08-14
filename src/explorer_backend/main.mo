@@ -19,6 +19,12 @@ shared ({ caller }) actor class Main() {
     type VectorStore = BluebandProvider.VectorStore;
     type Metadata = BluebandProvider.MetadataList;
     type RecipeInfo = BluebandProvider.DocumentMetadata;
+    type EmbeddingsResponse = {
+        #success : Text;
+        #rate_limited : Text;
+        #error : Text;
+    };
+
     type State = Types.Explorer;
 
     // State variables
@@ -125,6 +131,20 @@ shared ({ caller }) actor class Main() {
         ignore Profiles.updateMyProfile(state.profiles, caller, name, avatarUrl);
     };
 
+    public shared (msg) func getMyStoreID() : async Text {
+        switch (await getProfile(Principal.toText(msg.caller))) {
+            case (null) { throw Error.reject("No user profile found") };
+            case (?profile) {
+                switch (BluebandProviderCanister) {
+                    case (null) {
+                        throw Error.reject("No BluebandProvider Canister found");
+                    };
+                    case (?db) { return profile.store };
+                };
+            };
+        };
+    };
+
     // Update caller's profile
     public shared func generateUserName(name : Text) : async Text {
         let result = await Profiles.generateRandomID(name);
@@ -151,7 +171,8 @@ shared ({ caller }) actor class Main() {
         };
     };
 
-    public shared (msg) func embedRecipe(
+    public func putVector(
+        collectionId : Text,
         recipe_id : Text,
         vector_id : Text,
         start : Nat,
@@ -160,9 +181,10 @@ shared ({ caller }) actor class Main() {
         vector : [Float],
     ) : async Text {
 
-        let (profile, db) = await verifyProfileAndDB(msg.caller);
+        let db = await getDB();
+
         await db.putVector(
-            profile.store,
+            collectionId,
             recipe_id,
             vector_id,
             start,
@@ -172,9 +194,9 @@ shared ({ caller }) actor class Main() {
         );
     };
 
-    public shared (msg) func endUpdate(recipeId : Text) : async () {
-        let (profile, db) = await verifyProfileAndDB(msg.caller);
-        await db.endUpdate(profile.store, recipeId);
+    public func endUpdate(collectionId : Text, documentId : Text) : async () {
+        let db = await getDB();
+        await db.endUpdate(collectionId, documentId);
     };
 
     public shared (msg) func myStorePrincipal() : async ?Principal {
@@ -191,9 +213,10 @@ shared ({ caller }) actor class Main() {
         await db.getIndex(storeId);
     };
 
-    public func metadata(storeId : Text) : async ?Metadata {
+    public func getMetadataList(storeId : Text) : async ?Metadata {
         let db = await getDB();
-        return await db.getMetadataList(storeId);
+        let list = await db.getMetadataList(storeId);
+        list;
     };
 
     public func getChunks(storeId : Text, recipe_id : Text) : async ?Text {
@@ -211,9 +234,9 @@ shared ({ caller }) actor class Main() {
         return await db.getDocumentId(storeId, vectorId);
     };
 
-    public shared func documentIDToTitle(storeId : Text, recipe_id : Text) : async ?Text {
+    public shared func documentIDToTitle(storeId : Text, documentId : Text) : async ?Text {
         let db = await getDB();
-        return await db.documentIDToTitle(storeId, recipe_id);
+        return await db.documentIDToTitle(storeId, documentId);
     };
 
     public shared func titleToDocumentID(storeId : Text, title : Text) : async ?Text {
@@ -225,8 +248,14 @@ shared ({ caller }) actor class Main() {
     // HTTP Request
     //////////////////////////
 
-    public func fetchQueryResponse(prompt : Text, context : Text) : async Text {
-        return await Request.fetchQueryResponse(prompt, context, transform);
+    // Update caller's profile
+    public shared func generateEmbeddings(texts : [Text], secret : Text) : async EmbeddingsResponse {
+        let db = await getDB();
+        await db.generateEmbeddings(texts, secret);
+    };
+
+    public func fetchQueryResponse(prompt : Text, api_key: Text, context : Text) : async Text {
+        return await Request.fetchQueryResponse(prompt, context, api_key, transform);
     };
 
     public shared query func transform(args : HTTPTypes.TransformArgs) : async HTTPTypes.HttpResponsePayload {

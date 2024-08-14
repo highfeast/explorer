@@ -3,23 +3,27 @@ module {
     public type CollectionId = Text;
     public type DocumentId = Text;
     public type VectorId = Text;
+    public type ChunkId = Nat;
     public type Title = Text;
     public type Content = Text;
 
     public type DocumentMetadata = {
         id : DocumentId;
-        title : Title;
+        name : Text;
+        chunkStartId : ChunkId;
+        chunkEndId : ChunkId;
         chunkCount : Nat;
-        totalSize : Nat;
+        size : Nat;
         isEmbedded : Bool;
     };
 
     public type Vector = {
         id : VectorId;
         documentId : DocumentId;
-        start : Nat;
-        end : Nat;
-        embedding : [Float];
+        startPos : Nat;
+        endPos : Nat;
+        norm : Float;
+        vector : [Float];
     };
 
     public type VectorStore = [Vector];
